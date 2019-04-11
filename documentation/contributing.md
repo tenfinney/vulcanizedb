@@ -3,6 +3,8 @@
 Contributions are welcome! In addition to core contributions, developers are encouraged to build their own custom transformers which
 can be run together with other custom transformers using the [composeAndExeucte](../../staging/documentation/composeAndExecute.md) command.
 
+Pull requests should be opened against the `master` branch. Periodically, updates on `master` will be ported over to `staging` for tagged release.
+
 ## Creating a new migration file
 1. `make new_migration NAME=add_columnA_to_table1`
     - This will create a new timestamped migration file in `db/migrations`
