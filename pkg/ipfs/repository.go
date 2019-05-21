@@ -14,7 +14,6 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-// Still seeing some errors from tx and storage indexing processes... due to fk constraints being broken
 package ipfs
 
 import (
@@ -23,6 +22,8 @@ import (
 
 	"github.com/vulcanize/vulcanizedb/pkg/datastore/postgres"
 )
+
+// Still seeing some errors from tx and storage indexing processes... due to fk constraints being broken
 
 // CIDRepository is an interface for indexing CIDPayloads
 type CIDRepository interface {
@@ -91,7 +92,7 @@ func (repo *Repository) indexTransactionAndReceiptCIDs(payload *CIDPayload, head
 		err := tx.QueryRowx(`INSERT INTO public.transaction_cids (header_id, tx_hash, cid, dst, src) VALUES ($1, $2, $3, $4, $5) 
 									ON CONFLICT (header_id, tx_hash) DO UPDATE SET (cid, dst, src) = ($3, $4, $5)
 									RETURNING id`,
-			headerID, hash.Hex(), trxCidMeta.CID, trxCidMeta.To, trxCidMeta.From).Scan(&txID)
+			headerID, hash.Hex(), trxCidMeta.CID, trxCidMeta.Dst, trxCidMeta.Src).Scan(&txID)
 		if err != nil {
 			tx.Rollback()
 			return err

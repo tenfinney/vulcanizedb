@@ -29,12 +29,12 @@ const APIName = "vulcanizedb"
 // APIVersion is the version of the state diffing service API
 const APIVersion = "0.0.1"
 
-// PublicSeedNodeAPI
+// PublicSeedNodeAPI is the public api for the seed node
 type PublicSeedNodeAPI struct {
 	snp SyncPublishAndServe
 }
 
-// NewPublicSeedNodeAPI
+// NewPublicSeedNodeAPI creates a new PublicSeedNodeAPI with the provided underlying SyncPublishScreenAndServe process
 func NewPublicSeedNodeAPI(snp SyncPublishAndServe) *PublicSeedNodeAPI {
 	return &PublicSeedNodeAPI{
 		snp: snp,
@@ -42,7 +42,7 @@ func NewPublicSeedNodeAPI(snp SyncPublishAndServe) *PublicSeedNodeAPI {
 }
 
 // Subscribe is the public method to setup a subscription that fires off state-diff payloads as they are created
-func (api *PublicSeedNodeAPI) Subscribe(ctx context.Context, payloadChan chan ResponsePayload, params *Params) (*rpc.Subscription, error) {
+func (api *PublicSeedNodeAPI) Subscribe(ctx context.Context, payloadChan chan *ResponsePayload, streamFilters *StreamFilters) (*rpc.Subscription, error) {
 	// ensure that the RPC connection supports subscriptions
 	notifier, supported := rpc.NotifierFromContext(ctx)
 	if !supported {
@@ -54,9 +54,9 @@ func (api *PublicSeedNodeAPI) Subscribe(ctx context.Context, payloadChan chan Re
 
 	go func() {
 		// subscribe to events from the state diff service
-		payloadChannel := make(chan ResponsePayload)
+		payloadChannel := make(chan *ResponsePayload)
 		quitChan := make(chan bool)
-		api.snp.Subscribe(rpcSub.ID, payloadChannel, quitChan, params)
+		api.snp.Subscribe(rpcSub.ID, payloadChannel, quitChan, streamFilters)
 
 		// loop and await state diff payloads and relay them to the subscriber with then notifier
 		for {

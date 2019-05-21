@@ -24,19 +24,21 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-//
+// Subscription holds the information for an individual client subscription
 type Subscription struct {
-	PayloadChan chan<- ResponsePayload
-	QuitChan    chan<- bool
+	PayloadChan   chan<- *ResponsePayload
+	QuitChan      chan<- bool
+	StreamFilters *StreamFilters
 }
 
+// ResponsePayload holds the data returned from the seed node to the requesting client
 type ResponsePayload struct {
-	HeadersRlp      [][]byte `json:"headersRlp"`
-	UnclesRlp       [][]byte `json:"unclesRlp"`
-	TransactionsRlp [][]byte `json:"transactionsRlp"`
-	ReceiptsRlp     [][]byte `json:"receiptsRlp"`
-	StateNodesRlp   [][]byte `json:"stateNodesRlp"`
-	StorageNodesRlp [][]byte `json:"storageNodesRlp"`
+	HeadersRlp      [][]byte                               `json:"headersRlp"`
+	UnclesRlp       [][]byte                               `json:"unclesRlp"`
+	TransactionsRlp [][]byte                               `json:"transactionsRlp"`
+	ReceiptsRlp     [][]byte                               `json:"receiptsRlp"`
+	StateNodesRlp   map[common.Hash][]byte                 `json:"stateNodesRlp"`
+	StorageNodesRlp map[common.Hash]map[common.Hash][]byte `json:"storageNodesRlp"`
 
 	encoded []byte
 	err     error
@@ -73,11 +75,13 @@ type IPLDPayload struct {
 	StorageNodes    map[common.Hash][]StorageNode
 }
 
+// StateNode struct used to flag node as leaf or not
 type StateNode struct {
 	Value []byte
 	Leaf  bool
 }
 
+// StorageNode struct used to flag node as leaf or not
 type StorageNode struct {
 	Key   common.Hash
 	Value []byte
@@ -96,11 +100,13 @@ type CIDPayload struct {
 	StorageNodeCIDs map[common.Hash][]StorageNodeCID
 }
 
+// StateNodeCID is used to associate a leaf flag with a state node cid
 type StateNodeCID struct {
 	CID  string
 	Leaf bool
 }
 
+// StorageNodeCID is used to associate a leaf flag with a storage node cid
 type StorageNodeCID struct {
 	Key  common.Hash
 	CID  string
@@ -115,13 +121,13 @@ type ReceiptMetaData struct {
 
 // TrxMetaData wraps some additional data around our transaction CID for indexing
 type TrxMetaData struct {
-	CID  string
-	To   string
-	From string
+	CID string
+	Src string
+	Dst string
 }
 
-// Params are set by the client to tell the server how to filter that is fed into their subscription
-type Params struct {
+// StreamFilters are defined by the client to specifiy which data to receive from the seed node
+type StreamFilters struct {
 	HeaderFilter struct {
 		Off           bool
 		StartingBlock int64
@@ -132,8 +138,8 @@ type Params struct {
 		Off           bool
 		StartingBlock int64
 		EndingBlock   int64
-		Src           string
-		Dst           string
+		Src           []string
+		Dst           []string
 	}
 	ReceiptFilter struct {
 		Off           bool
@@ -142,18 +148,18 @@ type Params struct {
 		Topic0s       []string
 	}
 	StateFilter struct {
-		Off           bool
-		StartingBlock int64
-		EndingBlock   int64
-		Address       string // is converted to state key by taking its keccak256 hash
-		LeafsOnly     bool
+		Off               bool
+		StartingBlock     int64
+		EndingBlock       int64
+		Addresses         []string // is converted to state key by taking its keccak256 hash
+		IntermediateNodes bool
 	}
 	StorageFilter struct {
-		Off           bool
-		StartingBlock int64
-		EndingBlock   int64
-		Address       string
-		StorageKey    string
-		LeafsOnly     bool
+		Off               bool
+		StartingBlock     int64
+		EndingBlock       int64
+		Addresses         []string
+		StorageKeys       []string
+		IntermediateNodes bool
 	}
 }
